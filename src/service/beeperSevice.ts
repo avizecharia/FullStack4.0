@@ -15,7 +15,7 @@ export default class BeeperService {
     let beepers: Beeper[] = (await getFileData()) as Beeper[];
     // push
     beepers.push(beeper);
-    // save the array back to the file
+    // save the array back to the  file
     return await saveFileData(beepers);
   }
 
