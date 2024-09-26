@@ -1,11 +1,6 @@
 import exp,{Express} from 'express'
 import beeperController from './controllers/beeperController'
 import 'dotenv/config'
-import { Beeper, StatusEnum } from './models/beeperModel';
-
-
-
-
 
 const app :Express =exp()
 

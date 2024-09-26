@@ -1,10 +1,8 @@
 import fs from "fs/promises";
-import {Beeper} from "../models/beeperModel";
+import { Beeper } from "../models/beeperModel";
 
 export const getFileData = async (): Promise<Beeper[] | void> => {
   try {
-    // console.log("plppl");
-    
     const strData: string = await fs.readFile(
       `${__dirname}/../../data/beeper.json`,
       "utf-8"

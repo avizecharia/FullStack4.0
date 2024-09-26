@@ -1,6 +1,6 @@
-import fs from "fs/promises";
 import { getFileData, saveFileData } from "../config/fileDataLayer";
 import NewBepperDto from "../Dto/beeperDto";
+import StatusDto from "../Dto/statusDto";
 import { Beeper, StatusEnum } from "../models/beeperModel";
 
 export default class BeeperService {
@@ -30,15 +30,13 @@ export default class BeeperService {
   }
 
   public static convertToEnum(str: string): StatusEnum | undefined {
-    const statusValue = StatusEnum[str as keyof typeof StatusEnum];
+    const statusValue: StatusEnum = StatusEnum[str as keyof typeof StatusEnum];
     return statusValue;
   }
 
   public static async updateBeeperStatus(
     id: number,
-    befferStatus: any,
-    LAT = null,
-    LON = null
+    befferStatus: StatusDto
   ): Promise<boolean | string> {
     const enumList = [
       "manufactured",
@@ -47,7 +45,7 @@ export default class BeeperService {
       "deployed",
       "detonated",
     ];
-    const status = befferStatus.status;    
+    const status: string = befferStatus.status;
     const beepers: Beeper[] = (await this.getAllBeepers()) as Beeper[];
     const beeperIndex: number = beepers.findIndex((beeper) => beeper.id == id);
     const indexEnum: number = enumList.indexOf(beepers[beeperIndex].status);
@@ -63,11 +61,12 @@ export default class BeeperService {
       }
       if (status == "deployed") {
         if (befferStatus.LAT && befferStatus.LON) {
-          beepers[beeperIndex].status = this.convertToEnum(status)!;
-          beepers[beeperIndex].latitude = befferStatus.LAT!;
-          beepers[beeperIndex].longitude = befferStatus.LON!;
-          await saveFileData(beepers);
-          return "you apply deployed";
+          return this.activeDeployed(
+            beepers,
+            befferStatus,
+            beeperIndex,
+            status
+          );
         } else {
           return "you didnt put LAT and LOT";
         }
@@ -75,8 +74,40 @@ export default class BeeperService {
       beepers[beeperIndex].status = this.convertToEnum(status)!;
       await saveFileData(beepers);
       return true;
+    } else {
+      if (indexEnum < 4) {
+        const a: string = enumList[indexEnum + 1];
+        beepers[beeperIndex].status = this.convertToEnum(a)!;
+      }
+      if (beepers[beeperIndex].status == "deployed") {
+        if (befferStatus.LAT && befferStatus.LON) {
+          return this.activeDeployed(
+            beepers,
+            befferStatus,
+            beeperIndex,
+            status
+          );
+        } else {
+          return "you didnt put LAT and LON";
+        }
+      }
+      await saveFileData(beepers);
+      return true;
     }
     return false;
+  }
+
+  public static async activeDeployed(
+    beepers: Beeper[],
+    befferStatus: any,
+    beeperIndex: number,
+    status: string
+  ): Promise<string> {
+    beepers[beeperIndex].status = this.convertToEnum(status)!;
+    beepers[beeperIndex].latitude = befferStatus.LAT!;
+    beepers[beeperIndex].longitude = befferStatus.LON!;
+    await saveFileData(beepers);
+    return "you apply deployed";
   }
 
   public static async deleteBeeper(id: number): Promise<Beeper> {
@@ -105,6 +136,7 @@ export default class BeeperService {
         (beeper) => beeper.id == id
       );
       allBeepers[indexOfBeeper].status = StatusEnum.detonated;
+      allBeepers[indexOfBeeper].detonated_at = new Date();
       await saveFileData(allBeepers);
     }
   }
