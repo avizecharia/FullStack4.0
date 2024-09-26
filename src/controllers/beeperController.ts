@@ -1,6 +1,6 @@
 import exp, { Router, Request, Response, response } from "express";
 import BeeperService from "../service/beeperSevice";
-import {Beeper} from "../models/beeperModel";
+import { Beeper } from "../models/beeperModel";
 
 const router: Router = exp.Router();
 
@@ -25,16 +25,16 @@ router.post("/beepers", async (req: Request, res: Response): Promise<void> => {
 //get all beeper
 router.get("/beepers/", async (req: Request, res: Response): Promise<void> => {
   try {
-    const allBeepers : Beeper[] = await BeeperService.getAllBeepers()
+    const allBeepers: Beeper[] = await BeeperService.getAllBeepers();
     res.json({
       err: false,
-      message: "create new beeper",
+      message: "get all beepers was complete",
       data: allBeepers,
     });
   } catch (err) {
     res.status(400).json({
       err: true,
-      message: "field to create new beeper",
+      message: "field to get all beepers",
       data: null,
     });
   }
@@ -45,17 +45,19 @@ router.get(
   "/beepers/:id",
   async (req: Request, res: Response): Promise<void> => {
     try {
-        const beeper :Beeper = await BeeperService.getBeeperById(+ req.params.id) as Beeper
+      const beeper: Beeper = (await BeeperService.getBeeperById(
+        +req.params.id
+      )) as Beeper;
       // req.params.id
       res.json({
         err: false,
-        message: "create new beeper",
+        message: "get beeper by id was complete ",
         data: beeper,
       });
     } catch (err) {
       res.status(400).json({
         err: true,
-        message: "field to create new beeper",
+        message: "field to get beeper by id",
         data: null,
       });
     }
@@ -66,20 +68,24 @@ router.get(
 router.put(
   "/beepers/:id/status",
   async (req: Request, res: Response): Promise<void> => {
-
-    const result :boolean = await BeeperService.updateBeeperStatus(+ req.params.id,req.body.status)
+    const result: boolean | string = await BeeperService.updateBeeperStatus(
+      +req.params.id,
+      req.body
+    );
     try {
       // req.params.id
-
+      setTimeout(async () => {
+        await BeeperService.cheakIfDeployed(result, +req.params.id);
+      }, 10000);
       res.json({
         err: false,
-        message: "create new beeper",
+        message: "update status was complete",
         data: result,
       });
     } catch (err) {
       res.status(400).json({
         err: true,
-        message: "field to create new beeper",
+        message: "field to update status",
         data: null,
       });
     }
@@ -91,7 +97,7 @@ router.delete(
   "/beepers/:id",
   async (req: Request, res: Response): Promise<void> => {
     try {
-        const result : Beeper = await BeeperService.deleteBeeper(+ req.params.id)
+      const result: Beeper = await BeeperService.deleteBeeper(+req.params.id);
       // req.params.id
 
       res.json({
@@ -113,18 +119,20 @@ router.get(
   "/beepers/status/:status",
   async (req: Request, res: Response): Promise<void> => {
     try {
-        const result :Beeper[] = await BeeperService.getBeepersByStatus(req.params.status)
+      const result: Beeper[] = await BeeperService.getBeepersByStatus(
+        req.params.status
+      );
       // req.params.status
 
       res.json({
         err: false,
-        message: "create new beeper",
+        message: "get all beepers by status",
         data: result,
       });
     } catch (err) {
       res.status(400).json({
         err: true,
-        message: "field to create new beeper",
+        message: "field to get all beepers",
         data: null,
       });
     }
