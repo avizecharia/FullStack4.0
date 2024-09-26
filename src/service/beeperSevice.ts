@@ -36,28 +36,45 @@ export default class BeeperService {
 
   public static async updateBeeperStatus(
     id: number,
-    status: string,
+    befferStatus: any,
     LAT = null,
     LON = null
-  ): Promise<boolean> {
+  ): Promise<boolean | string> {
+    const enumList = [
+      "manufactured",
+      "assembled",
+      "shipped",
+      "deployed",
+      "detonated",
+    ];
+    const status = befferStatus.status;    
     const beepers: Beeper[] = (await this.getAllBeepers()) as Beeper[];
     const beeperIndex: number = beepers.findIndex((beeper) => beeper.id == id);
-
+    const indexEnum: number = enumList.indexOf(beepers[beeperIndex].status);
+    const indexOfStatus: number = enumList.indexOf(status);
     if (this.convertToEnum(status) != undefined) {
-      if (beepers[beeperIndex].status != StatusEnum.deployed) {
-        if (status == "deployed") {
-          if (LAT && LON) {
-            beepers[beeperIndex].status = this.convertToEnum(status)!;
-            beepers[beeperIndex].latitude = LAT!;
-            beepers[beeperIndex].longitude =LON!;
-            await saveFileData(beepers);
-            return true;
-          }
-        }
-        beepers[beeperIndex].status = this.convertToEnum(status)!;
-        await saveFileData(beepers);
-        return true;
+      if (
+        beepers[beeperIndex].status == StatusEnum.detonated ||
+        status == StatusEnum.manufactured ||
+        indexOfStatus < indexEnum ||
+        indexOfStatus == indexEnum
+      ) {
+        return "status not legal";
       }
+      if (status == "deployed") {
+        if (befferStatus.LAT && befferStatus.LON) {
+          beepers[beeperIndex].status = this.convertToEnum(status)!;
+          beepers[beeperIndex].latitude = befferStatus.LAT!;
+          beepers[beeperIndex].longitude = befferStatus.LON!;
+          await saveFileData(beepers);
+          return "you apply deployed";
+        } else {
+          return "you didnt put LAT and LOT";
+        }
+      }
+      beepers[beeperIndex].status = this.convertToEnum(status)!;
+      await saveFileData(beepers);
+      return true;
     }
     return false;
   }
@@ -76,5 +93,19 @@ export default class BeeperService {
   public static async getBeepersByStatus(status: string): Promise<Beeper[]> {
     const allBeepers: Beeper[] = await this.getAllBeepers();
     return allBeepers.filter((beeper) => beeper.status == status);
+  }
+
+  public static async cheakIfDeployed(
+    result: string | boolean,
+    id: number
+  ): Promise<void> {
+    if (result == "you apply deployed") {
+      const allBeepers: Beeper[] = await this.getAllBeepers();
+      const indexOfBeeper: number = allBeepers.findIndex(
+        (beeper) => beeper.id == id
+      );
+      allBeepers[indexOfBeeper].status = StatusEnum.detonated;
+      await saveFileData(allBeepers);
+    }
   }
 }
