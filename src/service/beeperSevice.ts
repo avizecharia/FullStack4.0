@@ -116,8 +116,8 @@ export default class BeeperService {
       (beeper) => beeper.id == id
     );
     const beeper = allBeepers[indexBeeper];
-    const updatt = allBeepers.filter((beeper) => beeper.id != id);
-    await saveFileData(updatt);
+    allBeepers.splice(indexBeeper, 1);
+    await saveFileData(allBeepers);
     return beeper;
   }
 
